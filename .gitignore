@@ -1,0 +1,3 @@
+json/credentials/*
+node_modules
+appstate.json

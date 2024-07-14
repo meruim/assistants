@@ -1,0 +1,32 @@
+{
+  "createdBy": {
+    "GitHub": "https://github.com/mangroveprot",
+    "Facebook": "www.facebook.com/gerald.c.villaver"
+  },
+  "admin": {
+    "author": "ViLLAVER",
+    "adminsBot": ["100055592632190", "100040690662149", "100027876517873"],
+    "API": "https://xsjcw5-5000.csb.app"
+  },
+  "settings": {
+    "system": true,
+    "autoreact": true,
+    "antileave": true,
+    "antiunsend": false,
+    "listenEvents": true,
+    "selfListen": false,
+    "autoMarkRead": false,
+    "autoMarkDelivery": false,
+    "forceLogin": true
+  },
+  "assistant": {
+    "botNickName": "Assistant",
+    "prefix": ".",
+    "hasPrefix": false,
+    "autoRestartTime": 3600000,
+    "mongodbURI": "mongodb+srv://jojogret:jojogret@super.sho6ec4.mongodb.net/?retryWrites=true&w=majority&appName=super"
+  },
+  "apiKeys": {
+    "geniusKey": "r8qCZf7SAVyw3DUtl8PbnLHu1-qN8Yq83LyUgH9d3-LeUsfERLbCtGibCQB0dTxW"
+  }
+}
