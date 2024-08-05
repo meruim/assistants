@@ -1,4 +1,4 @@
-const login = require("../../fca-unofficial");
+const login = require("fca-unofficial");
 const log = require("../../logger/log");
 const path = require("path");
 const fs = require("fs-extra");
@@ -46,7 +46,7 @@ let completedLogins = 0;
 
   if (appStates.length === 0) {
     const notFoundTimer = twirlTimer(
-      `No Appstate found, preparing to stop the runtime!`
+      `No Appstate found, preparing to stop the runtime`
     );
 
     setTimeout(async () => {
@@ -102,7 +102,7 @@ let completedLogins = 0;
           forceLogin,
         });
 
-        api.getUserInfo(api.getCurrentUserID(), (err, ret) => {
+        api.getUserInfo(api.getCurrentUserID(), async (err, ret) => {
           if (err) {
             log.error(
               `❌ Failed to retrieve user information. \nAuthentication record: ${appState}`,
@@ -136,7 +136,6 @@ let completedLogins = 0;
   const apis = await Promise.all(loginPromises);
 
   // Delete invalid and valid appstate files
-
   if (invalidAppStates.length > 0) {
     for (const invalidAppState of invalidAppStates) {
       await deleteAppStateFile(invalidAppState);
@@ -144,22 +143,18 @@ let completedLogins = 0;
   }
 
   if (completedLogins > 0) {
-    for (let i = 0; i < apis.length; i++) {
-      const api = apis[i];
-
-      api.listen(async (err, event) => {
-        console.log("tre");
-        return;
-      });
-      // api.listenMqtt(async (err, event) => {
-      //   if (err) {
-      //     log.err("Error in MQTT listener:", err, api);
-      //     return;
-      //   }
-      //   const listen = require("./components/listener");
-      //   listen({ api, event });
-      // });
-    }
+    const listener = require("./components/listener");
+    apis.forEach((api) => {
+      if (api) {
+        api.listen(async (err, event) => {
+          if (err) {
+            log.error("Error in listener:", err, api);
+            return;
+          }
+          const listen = require("./components/listener");
+          await listen({ api, event });
+        });
+      }
+    });
   }
-  console.log("IM ILLEGAL");
 })();
