@@ -82,6 +82,7 @@ let completedLogins = 0;
             `Failed to login. No credentials found at json/credentials`,
             err
           );
+          invalidAppStates.push(appState);
           resolve(null);
           return;
         }
@@ -142,19 +143,20 @@ let completedLogins = 0;
     }
   }
 
-  if (completedLogins > 0) {
-    const listener = require("./components/listener");
-    apis.forEach((api) => {
-      if (api) {
-        api.listen(async (err, event) => {
-          if (err) {
-            log.error("Error in listener:", err, api);
-            return;
-          }
-          const listen = require("./components/listener");
-          await listen({ api, event });
-        });
-      }
-    });
+  if (completedLogins < 0) {
+    exit();
   }
+
+  apis.forEach((api) => {
+    if (api) {
+      api.listen(async (err, event) => {
+        if (err) {
+          log.error("Error in listener:", err, api);
+          return;
+        }
+        const listen = require("./components/listener");
+        await listen({ api, event });
+      });
+    }
+  });
 })();

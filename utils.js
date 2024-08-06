@@ -179,6 +179,34 @@ async function loadScripts() {
   return Object.keys(errs).length === 0 ? false : errs;
 }
 
+function getUserInfo(api, userID) {
+  return new Promise((resolve, reject) => {
+    api.getUserInfo(userID, (err, ret) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(ret[userID]);
+      }
+    });
+  });
+}
+
+async function getName(api, userID) {
+  return new Promise(async (resolve, reject) => {
+    if (!userID) {
+      return resolve("Guest");
+    }
+
+    try {
+      const userInfo = await getUserInfo(api, userID);
+      resolve(userInfo.name);
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+      resolve("Guest");
+    }
+  });
+}
+
 const utils = {
   twirlTimer,
   config,
@@ -187,6 +215,8 @@ const utils = {
   message,
   randomString,
   getExtFromMimeType,
+  getUserInfo,
+  getName,
 };
 
 /*

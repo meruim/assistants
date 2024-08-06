@@ -12,7 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/node": "^18.0.6",
-    "axios": "^1.7.2",
+    "axios": "^1.7.3",
     "chalk": "4.1.2",
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.19.2",

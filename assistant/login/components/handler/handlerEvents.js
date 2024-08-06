@@ -8,6 +8,8 @@ module.exports = async function (
   commands,
   log
 ) {
+  const { getName } = global.utils;
+  const Replies = global.Assistant.onReply;
   async function onStart() {
     if (event.body) {
       const lowerBody = event.body.toLowerCase();
@@ -55,22 +57,54 @@ module.exports = async function (
           );
         });
 
-        await commands.get(commandName).onStart({ api, event, args, message });
+        await commands.get(commandName).onStart({
+          api,
+          event,
+          args,
+          message,
+          botAdmins,
+          message,
+          hasPrefix,
+          commandName,
+          getName: (uid) => getName(api, uid || ""),
+        });
       } catch (error) {
-        api.sendMessage(
+        message.reply(
           `Error in command '${commandName}': ${error.stack
             .split("\n")
             .slice(0, 3)
-            .join("\n")}`,
-          event.threadID
+            .join("\n")}`
         );
         log.error(error);
       }
     }
   }
 
-  async function onReply() {
-    // Codes here
+  async function handleReply() {
+    if (event.body) {
+      const args = event.body.split(" ");
+      try {
+        const { messageReply = {} } = event;
+        if (Replies.has(messageReply.messageID)) {
+          const { commandName, ...rest } = Replies.get(messageReply.messageID);
+          const Reply = { commandName, ...rest };
+          const cmdFile = commands.get(commandName);
+
+          await cmdFile.onReply({
+            api,
+            event,
+            args,
+            message,
+            Reply: Reply,
+          });
+        }
+      } catch (error) {
+        log.error(error.stack);
+        message.reply(
+          `❌ | ${error.message}\n${error.stack}\n${error.name}\n${error.code}\n${error.path}`
+        );
+      }
+    }
   }
 
   async function onReaction() {
@@ -89,7 +123,7 @@ module.exports = async function (
 
   return {
     onStart,
-    onReply,
+    onReply: handleReply,
     onReaction,
   };
 };

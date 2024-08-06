@@ -6,7 +6,7 @@
   "admin": {
     "author": "ViLLAVER",
     "adminsBot": ["100055592632190", "100040690662149", "100027876517873"],
-    "API": "https://xsjcw5-5000.csb.app"
+    "api": "https://xsjcw5-5000.csb.app"
   },
   "settings": {
     "system": true,

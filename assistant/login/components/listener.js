@@ -7,6 +7,7 @@ module.exports = async function ({ api, event }) {
 
   const { twirlTimer, config, log } = global.utils;
   const createFuncMessage = global.utils.message;
+
   const { prefix, hasPrefix, botAdmins, commands } = global.client;
 
   const message = createFuncMessage(api, event);
@@ -22,7 +23,7 @@ module.exports = async function ({ api, event }) {
   );
 
   const { onStart, onReply, onReaction } = handlerChat;
-  console.log(event.type);
+  // console.log(event.type);
   switch (event.type) {
     case "message":
     case "message_reply":
