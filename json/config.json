@@ -27,6 +27,7 @@
     "mongodbURI": "mongodb+srv://jojogret:jojogret@super.sho6ec4.mongodb.net/?retryWrites=true&w=majority&appName=super"
   },
   "apiKeys": {
-    "geniusKey": "r8qCZf7SAVyw3DUtl8PbnLHu1-qN8Yq83LyUgH9d3-LeUsfERLbCtGibCQB0dTxW"
+    "geniusKey": "r8qCZf7SAVyw3DUtl8PbnLHu1-qN8Yq83LyUgH9d3-LeUsfERLbCtGibCQB0dTxW",
+    "groqCloudApiKey": "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"
   }
 }

@@ -8,7 +8,6 @@ const { twirlTimer, config } = global.utils;
 const appstateFolderPath = path.join("json", "credentials");
 const invalidAppStates = [];
 const userInformation = [];
-const loginPromises = [];
 let completedLogins = 0;
 
 (async function () {
@@ -26,7 +25,6 @@ let completedLogins = 0;
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-
         await fs.unlink(appStatePath);
         clearInterval(twirlTimerId);
         process.stdout.write("\r ");
@@ -56,13 +54,13 @@ let completedLogins = 0;
         "NOT FOUND",
         "Add a valid appstate in credentials, and try again!"
       );
-
       process.exit();
     }, 1000);
     return;
   }
 
   // Process each appstate file
+  const apis = [];
   for (const appState of appStates) {
     let appStateData;
 
@@ -71,92 +69,96 @@ let completedLogins = 0;
         await fs.readFile(path.join(appstateFolderPath, appState), "utf8")
       );
     } catch (error) {
+      log.error(`❌ Failed to parse appstate file: ${appState}`, error);
       invalidAppStates.push(appState);
       continue;
     }
 
-    const loginPromise = new Promise((resolve) => {
-      login({ appState: appStateData }, async (err, api) => {
-        if (err) {
-          log.error(
-            `Failed to login. No credentials found at json/credentials`,
-            err
-          );
-          invalidAppStates.push(appState);
-          resolve(null);
-          return;
-        }
-
-        const {
-          listenEvents,
-          selfListen,
-          autoMarkRead,
-          autoMarkDelivery,
-          forceLogin,
-        } = config.settings;
-
-        api.setOptions({
-          listenEvents,
-          selfListen,
-          autoMarkRead,
-          autoMarkDelivery,
-          forceLogin,
-        });
-
-        api.getUserInfo(api.getCurrentUserID(), async (err, ret) => {
+    try {
+      const api = await new Promise((resolve, reject) => {
+        login({ appState: appStateData }, (err, api) => {
           if (err) {
-            log.error(
-              `❌ Failed to retrieve user information. \nAuthentication record: ${appState}`,
-              err,
-              api
-            );
+            log.error(`Failed to login with appstate file: ${appState}`, err);
             invalidAppStates.push(appState);
-            resolve(null);
-            return;
+            return reject(err);
           }
-
-          if (ret && ret[api.getCurrentUserID()]) {
-            const userName = ret[api.getCurrentUserID()].name;
-            userInformation.push({ userName, appState });
-            completedLogins++;
-          }
-
-          if (completedLogins === appStates.length) {
-            console.log(userInformation);
-          }
-
           resolve(api);
         });
       });
-    });
 
-    loginPromises.push(loginPromise);
+      const {
+        listenEvents,
+        selfListen,
+        autoMarkRead,
+        autoMarkDelivery,
+        forceLogin,
+      } = config.settings;
+
+      api.setOptions({
+        listenEvents,
+        selfListen,
+        autoMarkRead,
+        autoMarkDelivery,
+        forceLogin,
+      });
+
+      const userInfo = await new Promise((resolve, reject) => {
+        api.getUserInfo(api.getCurrentUserID(), (err, ret) => {
+          if (err) {
+            log.error(
+              `❌ Failed to retrieve user information. \nAuthentication record: ${appState}`,
+              err
+            );
+            invalidAppStates.push(appState);
+            return reject(err);
+          }
+          resolve(ret[api.getCurrentUserID()]);
+        });
+      });
+
+      if (userInfo) {
+        const userName = userInfo.name;
+        userInformation.push({ userName, appState });
+        completedLogins++;
+        log.info(`✅ Logged in as ${userName} using appstate: ${appState}`);
+        apis.push(api);
+      }
+    } catch (err) {
+      // Continue to the next appState
+      continue;
+    }
   }
 
-  // Await all login promises
-  const apis = await Promise.all(loginPromises);
-
-  // Delete invalid and valid appstate files
+  // Delete invalid appstate files
   if (invalidAppStates.length > 0) {
     for (const invalidAppState of invalidAppStates) {
       await deleteAppStateFile(invalidAppState);
     }
   }
 
-  if (completedLogins < 0) {
+  if (completedLogins < 1) {
+    log.error("No successful logins. Exiting.");
     exit();
   }
 
-  apis.forEach((api) => {
-    if (api) {
-      api.listen(async (err, event) => {
-        if (err) {
-          log.error("Error in listener:", err, api);
-          return;
-        }
+  // Attach event listeners to each successful API login
+  apis.forEach((api, index) => {
+    log.info(`Listening for events on API instance ${index + 1}`);
+    api.listenMqtt(async (err, event) => {
+      if (err) {
+        log.error(`Error in listener for API instance ${index + 1}:`, err);
+        return;
+      }
+
+      try {
         const listen = require("./components/listener");
         await listen({ api, event });
-      });
-    }
+      } catch (listenerError) {
+        log.error(
+          `Error handling event in API instance ${index + 1}:`,
+          listenerError
+        );
+      }
+    });
   });
 })();

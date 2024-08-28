@@ -1,25 +1,5 @@
 process.on("unhandledRejection", (error) => console.log(error));
 process.on("uncaughtException", (error) => console.log(error));
-// require("./assistant/server/server");
-// const utils = require("./utils");
-
-// global.Assistant = {
-//   onReply: new Map(),
-// };
-
-// //Global Utils
-// global.utils = utils;
-
-// (async () => {
-//   //Login
-//   const loginModule = require("./assistant/login/login");
-//   try {
-//     const loginFunction = await loginModule();
-//     await loginFunction();
-//   } catch (error) {
-//     console.error("Error during login process:", error);
-//   }
-// })();
 
 const { spawn } = require("child_process");
 const log = require("./logger/log");

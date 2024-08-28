@@ -22,8 +22,8 @@ module.exports = async function ({ api, event }) {
     log
   );
 
-  const { onStart, onReply, onReaction } = handlerChat;
-  // console.log(event.type);
+  const { onStart, onReply, onReaction, handleEvent } = handlerChat;
+
   switch (event.type) {
     case "message":
     case "message_reply":
@@ -33,6 +33,9 @@ module.exports = async function ({ api, event }) {
       break;
     case "message_reaction":
       onReaction();
+      break;
+    case "event":
+      handleEvent();
       break;
     case "typ":
       // typ();
@@ -47,16 +50,3 @@ module.exports = async function ({ api, event }) {
       break;
   }
 };
-
-/* For my future ref
-  if (!global.Assistant.onReply.has(info.messageID)) {
-    global.Assistant.onReply.set(info.messageID, {
-      cmdName,
-      author: events.senderID,
-    });
-    console.log(global.Assistant.onReply);
-  } else {
-    // If the message ID already exists, skip logging the data
-    console.log("Skipping duplicate message ID:", info.messageID);
-  }
-  */
