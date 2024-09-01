@@ -1,3 +1,5 @@
+const { err } = require("../../../logger/log");
+
 module.exports = async function ({ api, event }) {
   const path = require("path");
   const fs = require("fs-extra");

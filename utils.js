@@ -120,10 +120,13 @@ async function loadScripts() {
   const eventsPath = path.join(__dirname, "scripts", "events");
 
   try {
+    // Clear require cache
     Object.keys(require.cache).forEach((key) => delete require.cache[key]);
-    const commandFiles =
-      fs.readdirSync(commandsPath).filter((file) => file.endsWith(".js")) ||
-      file.endsWith(".ts");
+
+    // Load command files
+    const commandFiles = fs
+      .readdirSync(commandsPath)
+      .filter((file) => file.endsWith(".js") || file.endsWith(".ts"));
 
     commandFiles.forEach((file) => {
       try {
@@ -137,7 +140,7 @@ async function loadScripts() {
         } else if (!cmdFile.config) {
           throw new Error(`Error: ${file} does not export config!`);
         } else if (!cmdFile.onStart) {
-          throw new Error(`Error: ${file} does not export onRun!`);
+          throw new Error(`Error: ${file} does not export onStart!`);
         } else {
           global.client.commands.set(cmdFile.config.name, cmdFile);
         }
@@ -147,9 +150,10 @@ async function loadScripts() {
       }
     });
 
-    const eventFiles =
-      fs.readdirSync(eventsPath).filter((file) => file.endsWith(".js")) ||
-      file.endsWith(".ts");
+    // Load event files
+    const eventFiles = fs
+      .readdirSync(eventsPath)
+      .filter((file) => file.endsWith(".js") || file.endsWith(".ts"));
 
     eventFiles.forEach((file) => {
       try {
@@ -174,8 +178,9 @@ async function loadScripts() {
     });
   } catch (error) {
     log.error(error.stack);
-    errs[file] = error;
+    errs["global"] = error;
   }
+
   return Object.keys(errs).length === 0 ? false : errs;
 }
 
@@ -207,6 +212,50 @@ async function getName(api, userID) {
   });
 }
 
+function convertTime(milliseconds, humanReadable = false) {
+  const seconds = milliseconds / 1000;
+
+  if (humanReadable) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const formattedTime = `${hours}h ${minutes}m`;
+
+    return formattedTime;
+  } else {
+    return seconds;
+  }
+}
+
+function autoRestart() {
+  const { autoRestartTime } = config.assistant;
+  if (config.assistant) {
+    const time = autoRestartTime;
+
+    if (!isNaN(time) && time > 0) {
+      const formattedTime = utils.convertTime(time, true);
+      setTimeout(() => {
+        console.log("AUTO RESTART", "Restarting...");
+        process.exit(2);
+      }, time);
+      return `Scheduled in: ${formattedTime}`;
+    } else if (
+      typeof time === "string" &&
+      time.match(
+        /^((((\d+,)+\d+|(\d+(\/|-|#)\d+)|\d+L?|\*(\/\d+)?|L(-\d+)?|\?|[A-Z]{3}(-[A-Z]{3})?) ?){5,7})$/gim
+      )
+    ) {
+      const cron = require("node-cron");
+      cron.schedule(time, () => {
+        console.log("AUTO RESTART", "Restarting...");
+        process.exit(2);
+      });
+      return `Scheduled with cron expression: ${time}`;
+    }
+  }
+
+  return "Auto restart is not configured";
+}
+
 const utils = {
   twirlTimer,
   config,
@@ -217,6 +266,8 @@ const utils = {
   getExtFromMimeType,
   getUserInfo,
   getName,
+  autoRestart,
+  convertTime,
 };
 
 /*
